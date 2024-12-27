@@ -1,0 +1,168 @@
+-- Script to create a dynamic, compact, and visually appealing player list UI with toggle functionality
+
+local Players = game:GetService("Players")
+local isUIOpen = true -- Tracks whether the UI is open or closed
+
+-- Create the ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayerListGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Create a Frame for the UI
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 250, 0, 400) -- Compact size
+mainFrame.Position = UDim2.new(0, 20, 0, 20) -- Top-left corner
+mainFrame.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15) -- Dark gray
+mainFrame.BackgroundTransparency = 0.1
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = true -- Initially visible
+mainFrame.Parent = screenGui
+
+-- Add a corner radius for rounded edges
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10) -- 10-pixel radius
+corner.Parent = mainFrame
+
+-- Create a Title Label
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Name = "TitleLabel"
+titleLabel.Size = UDim2.new(1, 0, 0, 40) -- Full width, 40px height
+titleLabel.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2) -- Slightly darker background
+titleLabel.BorderSizePixel = 0
+titleLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextScaled = true
+titleLabel.Text = "Player List" -- You can customize this text
+titleLabel.Parent = mainFrame
+
+-- Add a corner radius to the title
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 10)
+titleCorner.Parent = titleLabel
+
+-- Create a Description Label
+local descriptionLabel = Instance.new("TextLabel")
+descriptionLabel.Name = "DescriptionLabel"
+descriptionLabel.Size = UDim2.new(1, -10, 0, 30) -- Slightly smaller than the title
+descriptionLabel.Position = UDim2.new(0, 5, 0, 45) -- Positioned below the title
+descriptionLabel.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15) -- Same background as the main frame
+descriptionLabel.BackgroundTransparency = 1 -- Fully transparent
+descriptionLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8) -- Light gray text
+descriptionLabel.Font = Enum.Font.Gotham
+descriptionLabel.TextScaled = true
+descriptionLabel.Text = "Please dont be a dick and use it for helping players. Playsdies created this one :D" -- Customizable description
+descriptionLabel.TextWrapped = true
+descriptionLabel.Parent = mainFrame
+
+-- Create the ScrollingFrame for the player list
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Name = "PlayerListFrame"
+scrollingFrame.Size = UDim2.new(1, -10, 1, -100) -- Leaves space for title and description
+scrollingFrame.Position = UDim2.new(0, 5, 0, 80) -- Adjusted position
+scrollingFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1) -- Darker background
+scrollingFrame.BackgroundTransparency = 0.1
+scrollingFrame.BorderSizePixel = 0
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Adjust dynamically
+scrollingFrame.ScrollBarThickness = 8
+scrollingFrame.ScrollBarImageColor3 = Color3.new(0.6, 0.6, 0.6)
+scrollingFrame.Parent = mainFrame
+
+-- Add a corner radius to the scrolling frame
+local scrollCorner = Instance.new("UICorner")
+scrollCorner.CornerRadius = UDim.new(0, 10)
+scrollCorner.Parent = scrollingFrame
+
+-- Create a UIListLayout for the ScrollingFrame
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 5) -- Compact padding
+listLayout.FillDirection = Enum.FillDirection.Vertical
+listLayout.SortOrder = Enum.SortOrder.Name
+listLayout.Parent = scrollingFrame
+
+-- Function to create a player button
+local function createPlayerButton(player)
+    local button = Instance.new("TextButton")
+    button.Name = player.Name
+    button.Size = UDim2.new(1, -10, 0, 35) -- Compact height
+    button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2) -- Light black
+    button.BackgroundTransparency = 0.1
+    button.TextColor3 = Color3.new(1, 1, 1) -- White text
+    button.Font = Enum.Font.Gotham
+    button.TextScaled = true
+    button.Text = player.Name -- Display the player's name
+    button.Parent = scrollingFrame
+
+    -- Add a corner radius to each button
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 8)
+    buttonCorner.Parent = button
+
+    -- Handle button click
+    button.MouseButton1Click:Connect(function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart:PivotTo(game.Workspace.GameObjects.Physical.Players:WaitForChild(player.name):GetPivot())
+Print(game.Workspace.GameObjects.Physical.Players:WaitForChild(player.name):GetPivot())
+    end)
+
+    return button
+end
+
+-- Function to refresh the player list
+local function refreshPlayerList()
+    -- Clear existing buttons
+    for _, child in ipairs(scrollingFrame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+
+    -- Add a button for each player
+    for _, player in ipairs(Players:GetPlayers()) do
+        createPlayerButton(player)
+    end
+
+    -- Update the CanvasSize to fit all buttons
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
+end
+
+-- Listen for players joining and leaving
+Players.PlayerAdded:Connect(function()
+    refreshPlayerList()
+end)
+
+Players.PlayerRemoving:Connect(function()
+    refreshPlayerList()
+end)
+
+-- Automatically update the CanvasSize when layout changes
+listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
+end)
+
+-- Create the Toggle Button
+local toggleButton = Instance.new("TextButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0, 100, 0, 40) -- Small button
+toggleButton.Position = UDim2.new(0, 10, 1, -50) -- Bottom-left corner
+toggleButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.Text = "Hide UI"
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.TextScaled = true
+toggleButton.Parent = screenGui
+
+-- Add a corner radius to the toggle button
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 8)
+toggleCorner.Parent = toggleButton
+
+-- Toggle UI visibility
+toggleButton.MouseButton1Click:Connect(function()
+    isUIOpen = not isUIOpen
+    mainFrame.Visible = isUIOpen
+    toggleButton.Text = isUIOpen and "Hide UI" or "Show UI"
+end)
+
+-- Initial population of the list
+refreshPlayerList()
